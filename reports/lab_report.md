@@ -1,48 +1,4 @@
-"""Report generation helper."""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def _yes_no(value: bool) -> str:
-    return "yes" if value else "no"
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a complete markdown lab report from metrics data."""
-    scenario_rows = [
-        "| Scenario | Expected route | Actual route | Success | Retries | Interrupts |",
-        "|---|---|---|---:|---:|---:|",
-    ]
-    for item in metrics.scenario_metrics:
-        scenario_rows.append(
-            (
-                "| {scenario_id} | {expected} | {actual} | {success} | "
-                "{retries} | {interrupts} |"
-            ).format(
-                scenario_id=item.scenario_id,
-                expected=item.expected_route,
-                actual=item.actual_route or "",
-                success=_yes_no(item.success),
-                retries=item.retry_count,
-                interrupts=item.interrupt_count,
-            )
-        )
-
-    failed = [item for item in metrics.scenario_metrics if not item.success]
-    if failed:
-        failure_summary = "\n".join(
-            f"- `{item.scenario_id}`: expected `{item.expected_route}`, got `{item.actual_route}`; "
-            f"errors={item.errors or []}"
-            for item in failed
-        )
-    else:
-        failure_summary = "- All sample scenarios succeeded in the latest metrics run."
-
-    return f"""# Day 08 Lab Report
+# Day 08 Lab Report
 
 ## 1. Team / student
 
@@ -54,12 +10,12 @@ def render_report(metrics: MetricsReport) -> str:
 
 | Metric | Value |
 |---|---:|
-| Total scenarios | {metrics.total_scenarios} |
-| Success rate | {metrics.success_rate:.2%} |
-| Average nodes visited | {metrics.avg_nodes_visited:.2f} |
-| Total retries | {metrics.total_retries} |
-| Total interrupts / approvals | {metrics.total_interrupts} |
-| Resume success | {_yes_no(metrics.resume_success)} |
+| Total scenarios | 7 |
+| Success rate | 100.00% |
+| Average nodes visited | 6.43 |
+| Total retries | 3 |
+| Total interrupts / approvals | 2 |
+| Resume success | no |
 
 ## 3. Architecture
 
@@ -97,7 +53,15 @@ The retry loop is bounded by `attempt` and `max_attempts`. When a tool result is
 
 ## 5. Scenario results
 
-{chr(10).join(scenario_rows)}
+| Scenario | Expected route | Actual route | Success | Retries | Interrupts |
+|---|---|---|---:|---:|---:|
+| S01_simple | simple | simple | yes | 0 | 0 |
+| S02_tool | tool | tool | yes | 0 | 0 |
+| S03_missing | missing_info | missing_info | yes | 0 | 0 |
+| S04_risky | risky | risky | yes | 0 | 1 |
+| S05_error | error | error | yes | 2 | 0 |
+| S06_delete | risky | risky | yes | 0 | 1 |
+| S07_dead_letter | error | error | yes | 1 | 0 |
 
 ## 6. Failure analysis
 
@@ -111,7 +75,7 @@ The retry loop is bounded by `attempt` and `max_attempts`. When a tool result is
 
 Latest failed scenario details:
 
-{failure_summary}
+- All sample scenarios succeeded in the latest metrics run.
 
 ## 7. Persistence / recovery evidence
 
@@ -134,11 +98,3 @@ With one more day, the first production improvements would be persistent SQLite 
 LLM-as-judge evaluation for tool outputs, richer approval UI, and replaying state history
 for demo and
 debugging.
-"""
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")

@@ -25,6 +25,7 @@ dev = [
 ]
 google = ["langchain-google-genai>=2.1.0"]
 openai = ["langchain-openai>=0.3.0"]
+openrouter = ["langchain-openai>=0.3.0"]
 anthropic = ["langchain-anthropic>=0.3.0"]
 sqlite = ["langgraph-checkpoint-sqlite>=2.0"]
 postgres = ["langgraph-checkpoint-postgres>=2.0"]
@@ -41,9 +42,15 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "ANN"]
-ignore = ["ANN101", "ANN102"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "E402", "E501"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-q --strict-markers"
 testpaths = ["tests"]
+
+[tool.mypy]
+ignore_missing_imports = true
